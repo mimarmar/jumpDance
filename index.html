@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JumpDance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f0ff; --ink:#1b1035; --muted:#5b4d80; --panel:#ffffff; --line:#ddd3f5;
+  --red:#ff2e7e; --red-ink:#ffffff; --gold:#ffd23f; --chip:#ece6ff; --stage:#1b0f3a; --stage-ink:#ffffff; --ok:#19c37d; --cyan:#2ee6d6;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#120a26; --ink:#efeaff; --muted:#b3a6d9; --panel:#1d1238; --line:#35265c;
+    --red:#ff4f93; --red-ink:#120a26; --gold:#ffd84f; --chip:#2a1c4d; --stage:#0b0619; --stage-ink:#efeaff; --ok:#2bd68c; --cyan:#3ff0e0;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#120a26; --ink:#efeaff; --muted:#b3a6d9; --panel:#1d1238; --line:#35265c;
+  --red:#ff4f93; --red-ink:#120a26; --gold:#ffd84f; --chip:#2a1c4d; --stage:#0b0619; --stage-ink:#efeaff; --ok:#2bd68c; --cyan:#3ff0e0;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,"Trebuchet MS",system-ui,sans-serif;line-height:1.4}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:320px minmax(0,1fr);gap:20px;max-width:1320px;margin:0 auto;padding:16px;min-height:100%}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;align-self:start;display:flex;flex-direction:column;gap:20px}
+.panel h1{font-size:1.5rem;font-weight:700;margin:0;line-height:1.15}
+.panel h1 small{display:block;font-size:.95rem;font-weight:400;color:var(--muted);margin-top:4px}
+.group h2{font-size:1rem;font-weight:600;margin:0 0 8px}
+.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lv{border:2px solid var(--line);background:var(--chip);border-radius:12px;height:42px;font-size:1.15rem;font-weight:600}
+.lv[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+.more{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.95rem;color:var(--muted)}
+.more input,.add input{height:40px;border:2px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:500 1.05rem Rubik,sans-serif}
+.more input{width:72px;text-align:center}
+.seg{display:flex;flex-direction:column;gap:6px}
+.seg.row{flex-direction:row}
+.seg.row button{flex:1;align-items:center;text-align:center}
+.seg button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:2px solid var(--line);background:transparent;border-radius:12px;padding:7px 12px}
+.seg button span{font-size:.82rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{border-color:var(--red);background:var(--chip)}
+.seg button[disabled]{opacity:.45;cursor:not-allowed}
+.toggle{display:flex;align-items:center;gap:10px;font-size:.95rem;margin-top:6px}
+.toggle input{width:20px;height:20px;accent-color:var(--red)}
+.swatches{display:flex;gap:8px;margin-top:8px}
+.sw{width:32px;height:32px;border-radius:50%;border:3px solid transparent;padding:0}
+.sw[aria-pressed="true"]{border-color:var(--ink)}
+.hint{font-size:.85rem;color:var(--muted);margin:6px 0 0}
+
+.add{display:flex;gap:6px}
+.add input{flex:1;min-width:0;padding:0 10px}
+.add button,.small{border:2px solid var(--line);background:var(--chip);border-radius:10px;padding:0 12px;font-weight:600;height:40px}
+.players{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pl{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;border:2px solid var(--line);border-radius:12px;padding:6px 6px 6px 10px}
+.pl[aria-current="true"]{border-color:var(--red);background:var(--chip)}
+.pl .who{background:none;border:0;text-align:left;padding:0;min-width:0}
+.pl .who b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .who span{font-size:.85rem;color:var(--muted)}
+.dots{letter-spacing:2px;color:var(--gold);font-size:1.05rem}
+.pl .lvctl{display:flex;gap:2px}
+.pl .lvctl button,.pl .del{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:transparent;font-weight:700;padding:0}
+
+.stage{background:var(--stage);color:var(--stage-ink);border-radius:22px;padding:18px 18px 14px;display:flex;flex-direction:column;height:calc(100vh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));position:sticky;top:calc(16px + env(safe-area-inset-top,0px));align-self:start;overflow:hidden}
+.top{display:flex;align-items:flex-end;gap:12px;margin-top:22px;flex-wrap:wrap}
+.player-name{font-size:clamp(1.8rem,4vw,3rem);font-weight:700;line-height:1;color:var(--gold)}
+.player-name:empty{display:none}
+.badge{font-size:clamp(1.3rem,2.8vw,2rem);font-weight:600;line-height:1.1}
+.stars{font-size:clamp(1.4rem,3vw,2.2rem);letter-spacing:4px;color:var(--gold)}
+.stars .off{opacity:.25}
+.sub{font-size:1.05rem;opacity:.8}
+.tools{margin-left:auto;display:flex;gap:8px}
+.ghost{background:transparent;border:2px solid rgba(255,255,255,.35);color:var(--stage-ink);border-radius:12px;padding:6px 12px;font-weight:500}
+.ghost:hover{border-color:var(--gold)}
+
+.card-wrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:0;padding:14px 0;position:relative}
+.card{background:#fdf6d8;border-radius:14px;padding:10px;box-shadow:0 10px 0 rgba(0,0,0,.25);display:flex;transform-origin:50% 100%}
+.card svg{display:block}
+.card.spin svg{filter:blur(1.5px)}
+.card.land{animation:land .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes land{0%{transform:scale(.9) translateY(10px)}100%{transform:none}}
+.empty{text-align:center;max-width:32ch;font-size:1.3rem;opacity:.85}
+.empty b{color:var(--gold)}
+.count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(5rem,16vw,11rem);font-weight:700;color:var(--gold);text-shadow:0 6px 0 rgba(0,0,0,.4);pointer-events:none}
+.count:empty{display:none}
+.banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--gold);color:#14213d;border-radius:20px;padding:18px 28px;font-size:clamp(1.6rem,4vw,2.8rem);font-weight:700;text-align:center;box-shadow:0 8px 0 rgba(0,0,0,.35);animation:land .5s cubic-bezier(.3,1.6,.5,1)}
+.banner small{display:block;font-size:.5em;font-weight:500}
+
+.actions{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.go{background:var(--red);color:var(--red-ink);border:0;border-radius:999px;padding:13px 34px;font-size:1.35rem;font-weight:700;box-shadow:0 6px 0 rgba(0,0,0,.3)}
+.go.alt{background:var(--gold);color:#14213d}
+.go:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.go[disabled]{opacity:.5;cursor:not-allowed}
+
+.judge{margin-top:12px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.2);border-radius:16px;padding:12px 14px;display:none}
+.judge.show{display:block}
+.stage.judging .history{min-height:0;padding-top:8px}
+.stage.judging .hist svg{height:40px}
+.judge h3{margin:0 0 8px;font-size:1.1rem;font-weight:600}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.check{display:flex;align-items:center;gap:8px;border:2px solid rgba(255,255,255,.3);border-radius:12px;padding:8px 12px;background:transparent;color:var(--stage-ink);font-size:1rem}
+.check .box{width:24px;height:24px;border-radius:6px;border:2px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.check[aria-pressed="true"]{border-color:var(--ok);background:rgba(43,182,115,.2)}
+.check[aria-pressed="true"] .box{background:var(--ok);border-color:var(--ok);color:#fff}
+.verdict{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.verdict button{border:0;border-radius:12px;padding:10px 18px;font-weight:700;font-size:1.05rem}
+.yes{background:var(--ok);color:#fff}
+.yes[disabled]{opacity:.4;cursor:not-allowed}
+.no{background:rgba(255,255,255,.15);color:var(--stage-ink)}
+
+.history{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;align-items:flex-end;min-height:80px}
+.history:empty::before{content:"Aquí irán los retos que salgan.";opacity:.55;font-size:.95rem;align-self:center}
+.hist{background:#fdf6d8;border:3px solid transparent;border-radius:8px;padding:3px;flex:none;display:flex;flex-direction:column;align-items:center;color:#14213d;font-size:.72rem;font-weight:600;max-width:90px}
+.hist svg{height:52px;width:auto}
+.hist.ok{border-color:var(--ok)}
+.hist.ko{border-color:var(--red)}
+.hist span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:84px}
+
+.hist-row{display:flex;align-items:flex-end;gap:10px}
+.hist-row .history{flex:1;min-width:0}
+.hist-row .ghost{flex:none;margin-bottom:4px}
+.practice-tag{display:inline-block;background:var(--gold);color:#14213d;border-radius:8px;padding:0 8px;font-size:.9rem;font-weight:600;margin-left:6px}
+body.clean .panel{display:none}
+body.clean .app{grid-template-columns:1fr;max-width:none}
+
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .stage{position:relative;top:auto;height:auto;min-height:88vh}
+  .card-wrap{height:56vh;flex:none}
+}
+@media (prefers-reduced-motion: reduce){
+  .card.land,.banner{animation:none}
+}
+
+/* ---- JumpDance: ritmo y movimiento ---- */
+.eq{position:absolute;inset:0 0 auto;height:34px;display:flex;align-items:flex-start;gap:3px;padding:0 10px;pointer-events:none}
+.eq span{flex:1;border-radius:0 0 6px 6px;background:linear-gradient(var(--red),var(--cyan));height:var(--h);opacity:.85;transform-origin:top}
+.stage.playing .eq span{animation:eq calc(var(--beat,.75s)/2) ease-in-out infinite alternate;animation-delay:var(--d)}
+@keyframes eq{from{transform:scaleY(.35)}to{transform:scaleY(1.25)}}
+.stage{background:radial-gradient(120% 70% at 50% 110%,rgba(255,46,126,.28),transparent 60%),radial-gradient(80% 60% at 0% 0%,rgba(46,230,214,.16),transparent 60%),var(--stage)}
+.logo{font-weight:800;letter-spacing:-.02em;background:linear-gradient(90deg,var(--red),#a855f7 55%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tabs .brand{display:flex;align-items:center;gap:8px;font-size:1.2rem}
+.tabs .brand svg{width:26px;height:22px}
+.cover h1{font-size:clamp(3rem,8vw,5.6rem)!important;line-height:.95!important}
+.cover-art{background:radial-gradient(90% 80% at 50% 100%,rgba(255,46,126,.35),transparent 60%),var(--stage)!important}
+.cover-art svg{width:90%!important}
+.status{border-left-color:var(--red)!important}
+.player-name{color:var(--cyan)!important}
+.badge .num,.stars{color:var(--gold)}
+.go{box-shadow:0 6px 0 rgba(0,0,0,.3),0 0 24px rgba(255,46,126,.35)}
+@media (prefers-reduced-motion: reduce){ .stage.playing .eq span{animation:none} }
+
+.tempo-play{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.2);border-radius:999px;padding:4px}
+.tempo-play .tp-label{padding:0 8px 0 10px;font-weight:600;font-size:.95rem;opacity:.8}
+.tempo-play button{border:0;background:transparent;color:var(--stage-ink);border-radius:999px;padding:9px 14px;font-weight:600}
+.tempo-play button[aria-pressed="true"]{background:var(--cyan);color:#1b0f3a}
+
+/* ---- Web con pestañas ---- */
+.app{display:block;max-width:none;padding:0;min-height:100%}
+.tabs{position:sticky;top:0;z-index:10;display:flex;gap:4px;align-items:center;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:11;background:var(--panel)}
+.tabs .brand{font-weight:700;margin-right:12px;white-space:nowrap}
+.tabs a{color:var(--ink);text-decoration:none;font-weight:500;padding:8px 14px;border-radius:10px;white-space:nowrap}
+.tabs a[aria-current="page"]{background:var(--red);color:var(--red-ink)}
+.tabs a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.view{display:none;padding:16px}
+.view.active{display:block}
+.stage{position:relative;top:auto;height:calc(100vh - 92px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-width:1400px;margin:0 auto}
+body.clean .tabs{display:none}
+body.clean .stage{height:calc(100vh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+.lvbtn{width:40px;height:40px;border-radius:50%;font-size:1.3rem;font-weight:700;padding:0;vertical-align:middle}
+.lvbtn[hidden]{display:none}
+
+.cover{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:center;min-height:calc(100vh - 110px)}
+.cover h1{font-size:clamp(2.4rem,6vw,4.4rem);line-height:1;margin:0 0 12px;font-weight:700}
+.cover p.lead{font-size:1.25rem;color:var(--muted);margin:0 0 20px;max-width:34ch}
+.cover .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.cover .btns a{text-decoration:none}
+.btn2{display:inline-block;border:2px solid var(--line);border-radius:999px;padding:12px 22px;font-weight:600;color:var(--ink);background:var(--panel)}
+.status{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--gold);border-radius:14px;padding:12px 16px;font-size:1.02rem;max-width:44ch}
+.cover-art{background:var(--stage);border-radius:28px;padding:24px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.cover-art svg{width:85%;height:auto}
+
+.config{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
+.config .group{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+.config .group.wide{grid-column:1/-1}
+.config h1{grid-column:1/-1;margin:4px 0 0;font-size:1.8rem}
+
+.help{max-width:760px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px 26px 30px}
+.help h1{font-size:1.9rem;margin:0 0 6px}
+.help h2{font-size:1.3rem;margin:26px 0 8px}
+.help p,.help li{font-size:1.05rem;line-height:1.55}
+.help ol,.help ul{padding-left:1.3em}
+.legend{list-style:none;padding:0;margin:8px 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px 18px}
+.legend li{display:flex;align-items:center;gap:10px}
+.legend svg{width:86px;height:36px;flex:none;background:#fdf6d8;border-radius:6px}
+kbd{font-family:inherit;border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 6px;background:var(--chip)}
+
+@media (max-width:860px){
+  .cover{grid-template-columns:1fr;min-height:0}
+  .cover-art{max-width:360px;justify-self:center;width:100%}
+  .stage{height:auto;min-height:80vh}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="tabs" aria-label="Secciones">
+  <span class="brand"><svg viewBox="0 0 26 22" aria-hidden="true"><rect x="0" y="8" width="4" height="14" rx="2" fill="#ff2e7e"/><rect x="7" y="2" width="4" height="20" rx="2" fill="#a855f7"/><rect x="14" y="10" width="4" height="12" rx="2" fill="#2ee6d6"/><rect x="21" y="5" width="4" height="17" rx="2" fill="#ffd23f"/></svg><span class="logo">JumpDance</span></span>
+  <a href="#portada" data-v="portada">Portada</a>
+  <a href="#jugar" data-v="jugar">Jugar</a>
+  <a href="#configuracion" data-v="configuracion">Configuración</a>
+  <a href="#ayuda" data-v="ayuda">Cómo se usa</a>
+</nav>
+
+<section class="view" id="v-portada" aria-label="Portada">
+  <div class="cover">
+    <div>
+      <h1 class="logo">JumpDance</h1>
+      <p class="lead">Retos de saltos con música. Saca un reto, salta los aros al ritmo y gana estrellas para subir de nivel.</p>
+      <div class="status" id="coverStatus"></div>
+      <div class="btns">
+        <a class="go" href="#jugar">Empezar</a>
+        <a class="btn2" href="#configuracion">Configurar</a>
+        <a class="btn2" href="#ayuda">Cómo se usa</a>
+      </div>
+    </div>
+    <div class="cover-art" aria-hidden="true">
+      <svg viewBox="0 0 300 320">
+        <g stroke="rgba(255,255,255,.12)" stroke-width="2">
+          <rect x="30" y="20" width="76" height="76" rx="10" fill="rgba(255,255,255,.04)"/><rect x="112" y="20" width="76" height="76" rx="10" fill="#ff2e7e"/><rect x="194" y="20" width="76" height="76" rx="10" fill="rgba(255,255,255,.04)"/>
+          <rect x="30" y="102" width="76" height="76" rx="10" fill="#2ee6d6"/><rect x="112" y="102" width="76" height="76" rx="10" fill="#ffffff"/><rect x="194" y="102" width="76" height="76" rx="10" fill="#ffd23f"/>
+          <rect x="30" y="184" width="76" height="76" rx="10" fill="rgba(255,255,255,.04)"/><rect x="112" y="184" width="76" height="76" rx="10" fill="#a855f7"/><rect x="194" y="184" width="76" height="76" rx="10" fill="rgba(255,255,255,.04)"/>
+        </g>
+        <g fill="none" stroke="#1b0f3a" stroke-width="7" opacity=".55">
+          <circle cx="150" cy="58" r="26"/><circle cx="68" cy="140" r="26"/><circle cx="232" cy="140" r="26"/><circle cx="150" cy="222" r="26"/>
+        </g>
+        <circle cx="150" cy="140" r="26" fill="none" stroke="#1b0f3a" stroke-width="7"/><circle cx="150" cy="140" r="8" fill="#1b0f3a"/>
+        <g fill="#ffffff"><path d="M50 50 v-26 l16 -4 v24" stroke="#fff" stroke-width="3" fill="none"/><circle cx="46" cy="50" r="6"/><circle cx="62" cy="46" r="6"/>
+        <path d="M246 236 v-22" stroke="#fff" stroke-width="3"/><circle cx="242" cy="238" r="6"/><path d="M246 214 q10 4 8 14" stroke="#fff" stroke-width="3" fill="none"/></g>
+        <g>
+          <rect x="40" y="290" width="12" height="22" rx="3" fill="#ff2e7e"/><rect x="58" y="280" width="12" height="32" rx="3" fill="#a855f7"/><rect x="76" y="294" width="12" height="18" rx="3" fill="#2ee6d6"/><rect x="94" y="276" width="12" height="36" rx="3" fill="#ffd23f"/>
+          <rect x="112" y="286" width="12" height="26" rx="3" fill="#ff2e7e"/><rect x="130" y="272" width="12" height="40" rx="3" fill="#a855f7"/><rect x="148" y="284" width="12" height="28" rx="3" fill="#2ee6d6"/><rect x="166" y="278" width="12" height="34" rx="3" fill="#ffd23f"/>
+          <rect x="184" y="292" width="12" height="20" rx="3" fill="#ff2e7e"/><rect x="202" y="282" width="12" height="30" rx="3" fill="#a855f7"/><rect x="220" y="290" width="12" height="22" rx="3" fill="#2ee6d6"/><rect x="238" y="280" width="12" height="32" rx="3" fill="#ffd23f"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-jugar" aria-label="Jugar">
+  <main class="stage">
+    <div class="eq" id="eq" aria-hidden="true"></div>
+    <div class="top">
+      <div>
+        <div class="player-name" id="pName"></div>
+        <div class="badge"><button type="button" class="ghost lvbtn" id="lvDown" aria-label="Bajar nivel">−</button> Nivel <span id="lvLabel">1</span> <button type="button" class="ghost lvbtn" id="lvUp" aria-label="Subir nivel">+</button> <span class="stars" id="stars"></span></div>
+        <div class="sub" id="retoLabel" aria-live="polite">Pulsa «Sacar reto»</div>
+      </div>
+      <div class="tools">
+        <button type="button" class="ghost" id="clean">Pantalla completa</button>
+      </div>
+    </div>
+
+    <div class="card-wrap" id="wrap">
+      <p class="empty">Pulsa <b>Sacar reto</b>.</p>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="go" id="go">Sacar reto</button>
+      <button type="button" class="go alt" id="play" disabled>Saltar con ritmo</button>
+      <div class="tempo-play" id="tempos2" role="group" aria-label="Ritmo de la música">
+        <span class="tp-label">Ritmo</span>
+        <button type="button" data-t="60">Lento</button>
+        <button type="button" data-t="80">Medio</button>
+        <button type="button" data-t="100">Rápido</button>
+      </div>
+    </div>
+
+    <section class="judge" id="judge" aria-label="Verificación del reto">
+      <h3>Juez de estrellas: ¿cómo ha salido?</h3>
+      <div class="checks" id="checks">
+        <button type="button" class="check" data-k="0" aria-pressed="false"><span class="box">✓</span>Pie correcto en cada salto</button>
+        <button type="button" class="check" data-k="1" aria-pressed="false"><span class="box">✓</span>Dentro del aro, sin pisarlo</button>
+        <button type="button" class="check" data-k="2" aria-pressed="false"><span class="box">✓</span>Sin perder el equilibrio</button>
+      </div>
+      <div class="verdict">
+        <button type="button" class="yes" id="yes" disabled>Superado</button>
+        <button type="button" class="no" id="again">Repetir este reto</button>
+        <button type="button" class="no" id="no">No superado</button>
+      </div>
+    </section>
+
+    <div class="hist-row">
+      <div class="history" id="history" aria-label="Retos que han salido"></div>
+      <button type="button" class="ghost" id="clearHist" hidden>Limpiar</button>
+    </div>
+  </main>
+</section>
+
+<section class="view" id="v-configuracion" aria-label="Configuración">
+  <div class="config">
+    <h1>Configuración</h1>
+
+    <div class="group">
+      <h2>Modo</h2>
+      <div class="seg row" id="practiceSeg">
+        <button type="button" data-p="1">Solo práctica</button>
+        <button type="button" data-p="0">Retos</button>
+      </div>
+      <p class="hint" id="practiceHint"></p>
+    </div>
+
+    <div class="group">
+      <h2>Jugadores</h2>
+      <form class="add" id="addForm">
+        <input id="nameIn" maxlength="20" placeholder="Nombre" aria-label="Nombre del jugador">
+        <button type="submit" id="addBtn">Añadir</button>
+      </form>
+      <ul class="players" id="players"></ul>
+      <label class="toggle"><input type="checkbox" id="auto"> Pasar turno solo al terminar cada reto</label>
+      <p class="hint" id="noPlayers">Al añadir el primer jugador se activa el modo Retos.</p>
+    </div>
+
+    <div class="group">
+      <h2 id="lvTitle">Nivel</h2>
+      <div class="levels" id="levels"></div>
+      <label class="more">Otro nivel <input id="lvlIn" type="number" min="1" max="99" value="1"></label>
+    </div>
+
+    <div class="group">
+      <h2>Cómo salen los retos</h2>
+      <div class="seg" id="modes">
+        <button type="button" data-mode="new">Nuevos al azar<span>Se inventa uno distinto cada vez</span></button>
+        <button type="button" data-mode="shuffle">Tarjetas impresas, al azar<span>Las mismas que tienes en papel</span></button>
+        <button type="button" data-mode="order">Tarjetas impresas, en orden<span>Una detrás de otra</span></button>
+      </div>
+      <p class="hint" id="modeHint"></p>
+    </div>
+
+    <div class="group">
+      <h2>Música y ritmo</h2>
+      <div class="seg row" id="tempos">
+        <button type="button" data-t="60">Lento</button>
+        <button type="button" data-t="80">Medio</button>
+        <button type="button" data-t="100">Rápido</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="sound"> Sonido activado</label>
+    </div>
+
+    <div class="group">
+      <h2>Pie izquierdo en color</h2>
+      <label class="toggle"><input type="checkbox" id="colorFoot"> Colorear la huella izquierda</label>
+      <div class="swatches" id="swatches"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-ayuda" aria-label="Cómo se usa">
+  <article class="help">
+    <h1>Cómo se usa</h1>
+    <p>La ruleta saca retos de saltos para las pistas de aros: un aro central y cuatro alrededor, en cruz. Desde el nivel 7 aparecen saltos en diagonal y hacen falta cuatro aros más en las esquinas.</p>
+
+    <h2>Cómo se leen las tarjetas</h2>
+    <p>De arriba abajo, un salto por fila. La flecha hacia arriba significa hacia delante, hacia la pared donde está la pantalla.</p>
+    <ul class="legend" id="legend"></ul>
+
+    <h2>Para empezar: modo práctica</h2>
+    <ol>
+      <li>Entra en <b>Jugar</b> y pulsa <b>Sacar reto</b>. La ruleta gira y se para en una tarjeta.</li>
+      <li>Si quieres música, pulsa <b>Saltar con ritmo</b>: cuenta 3, 2, 1, ¡ya! y cada golpe marca un salto. La fila que toca se ilumina.</li>
+      <li>Cambia de nivel con los botones − y + que hay junto al número.</li>
+    </ol>
+    <p>En práctica no hay juez ni estrellas: sirve para aprender el código y calentar.</p>
+
+    <h2>Jugar con retos y estrellas</h2>
+    <ol>
+      <li>En <b>Configuración</b>, añade los nombres del grupo. Al añadir el primero se activa el modo Retos.</li>
+      <li>En <b>Jugar</b> aparece el nombre del jugador al que le toca. Saca su reto y salta.</li>
+      <li>El <b>juez de estrellas</b> marca las tres casillas si se cumplen: pie correcto en cada salto, dentro del aro sin pisarlo y sin perder el equilibrio.</li>
+      <li>Con las tres marcadas se puede pulsar <b>Superado</b>. Si falla algo: <b>Repetir este reto</b> (lo vuelve a intentar) o <b>No superado</b> (no cuenta y pasa el turno).</li>
+      <li>Con <b>3 retos superados</b> el jugador sube de nivel y suena la fanfarria.</li>
+    </ol>
+
+    <h2>Roles en cada pista</h2>
+    <ul>
+      <li><b>Saltador:</b> hace la tarjeta.</li>
+      <li><b>Director de pista:</b> maneja la tableta y señala el salto que toca.</li>
+      <li><b>Juez de estrellas:</b> observa y dice qué casillas se marcan.</li>
+      <li><b>Colocador:</b> recoloca los aros y es el siguiente en saltar.</li>
+    </ul>
+
+    <h2>Más opciones</h2>
+    <ul>
+      <li><b>Cómo salen los retos:</b> nuevos al azar, o las tarjetas impresas al azar o en orden, con su mismo número.</li>
+      <li><b>Pie izquierdo en color:</b> colorea la huella izquierda del color de la cinta del tobillo, como apoyo visual.</li>
+      <li><b>Pantalla completa:</b> en Jugar, oculta las pestañas para proyectar.</li>
+      <li><b>Limpiar:</b> borra las miniaturas de los retos que han salido, sin tocar niveles ni estrellas.</li>
+      <li>Atajos en Jugar: <kbd>Espacio</kbd> saca un reto y <kbd>R</kbd> salta con ritmo.</li>
+      <li>Los nombres, niveles y ajustes se guardan solo en este dispositivo.</li>
+    </ul>
+  </article>
+</section>
+</div>
+
+<script>
+/* Tarjetas impresas (las mismas de la página de tarjetas) */
+const LEVELS = [
+  ["H U:B H R:B H D:B H L:B H","R:B L:B U:B D:B H","H D:B U:B L:B R:B H"],
+  ["H U:L H D:R H L:L H R:R H","R:R H L:L H U:R H D:L H","H L:B H U:R H R:L H D:B H"],
+  ["U:R R:R D:L L:L U:B H","H L:B U:L R:R D:B L:R H","D:L R:B U:R L:L D:B R:L H"],
+  ["H U:R R:R D:R H L:L U:L R:L H","R:L D:L L:L H U:R L:R D:R H","H D:B U:R R:R H L:L D:L U:B H"],
+  ["U:B D:B L:R R:L H U:L D:R H","H R:R L:R U:L D:L H L:B R:B H","L:L R:R U:B D:B H R:L L:R U:B H"],
+  ["H R:L L:R U:L H D:R R:R U:B L:L H","U:R H D:L H R:B L:L U:R D:B H","H L:R R:L D:L U:R H R:R L:L D:B H"],
+  ["H UR:B H UL:B H DR:B H DL:B H","UL:L UR:R H DL:L DR:R H","H U:B UR:R R:R DR:B D:L H"],
+  ["UR:R DL:L H UL:L DR:R H U:B D:B H","H L:L UL:L U:B UR:R R:R H DR:R DL:L H","DL:R UR:L H UL:R DR:L L:B R:B H"],
+  ["U:R UR:R R:L DR:L D:B DL:R L:R UL:L U:B H","H D:L U:R L:L R:R UL:B DR:B UR:L DL:R H","R:B L:L UL:R D:R UR:L H DL:B U:L DR:R L:B H"],
+  ["H U:L D:R R:R L:L UR:R DL:L H UL:B DR:B U:R D:L H","UL:R R:L DL:R U:L DR:L L:R UR:B D:B H R:R UL:L D:B H","H R:L UL:R D:L UR:R L:L DR:B U:R DL:L R:B H U:B D:B H"]
+];
+const DIRS = {U:0,UR:45,R:90,DR:135,D:180,DL:225,L:270,UL:315};
+const DIR_NAME = {U:"delante",D:"atrás",L:"izquierda",R:"derecha",UR:"delante derecha",UL:"delante izquierda",DR:"atrás derecha",DL:"atrás izquierda"};
+const FOOT_NAME = {L:"pie izquierdo",R:"pie derecho",B:"dos pies"};
+const FOOT = "M24,5 C34,5 39,16 38,30 C37,44 34,52 34,62 C34,74 30,80 23,80 C16,80 13,74 14,64 C15,54 16,48 12,40 C8,32 8,20 11,13 C14,7 18,5 24,5 Z";
+const ARROW = "0,-38 35,-4 13,-4 13,38 -13,38 -13,-4 -35,-4";
+const COLORS = [["Rojo","#e63946"],["Azul","#3a86ff"],["Verde","#2bb673"],["Amarillo","#ffbe0b"]];
+
+/* Estado (se recuerda en este navegador) */
+const KEY = "ruleta-saltos-v2";
+let S = { level:1, mode:"new", colorFoot:false, color:"#e63946", order:{}, players:[], turn:0, tempo:80, sound:true, auto:true, practice:true };
+try{ Object.assign(S, JSON.parse(localStorage.getItem(KEY)) || {}); }catch(e){}
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+/* Dibujo de tarjetas */
+function foot(x,y,left){
+  const fill = (left && S.colorFoot) ? S.color : "#fff";
+  const t = left ? `translate(${x+44},${y}) scale(-1,1)` : `translate(${x},${y})`;
+  return `<g transform="${t}"><path d="${FOOT}" fill="${fill}" stroke="#222" stroke-width="1.6"/><circle cx="24" cy="70" r="3.5" fill="none" stroke="#222" stroke-width="1.4"/></g>`;
+}
+function step(st,cy,W){
+  if(st==="H") return `<circle cx="${W/2}" cy="${cy}" r="31" fill="none" stroke="#111" stroke-width="8"/><circle cx="${W/2}" cy="${cy}" r="10" fill="#111"/>`;
+  const [d,f] = st.split(":");
+  let s = `<polygon points="${ARROW}" fill="#111" transform="translate(${W/2},${cy}) rotate(${DIRS[d]})"/>`;
+  if(f==="L"||f==="B") s += foot(20,cy-42,true);
+  if(f==="R"||f==="B") s += foot(W-64,cy-42,false);
+  return s;
+}
+function describe(seq){
+  return seq.split(" ").map(st=>{
+    if(st==="H") return "aro central";
+    const [d,f]=st.split(":"); return `${DIR_NAME[d]} con ${FOOT_NAME[f]}`;
+  }).join(", ");
+}
+function cardSVG(seq, hi){
+  const steps = seq.trim().split(/\s+/);
+  const W=240, RH=100, PAD=16, H=steps.length*RH+PAD*2;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${describe(seq)}"><rect x="2.5" y="2.5" width="${W-5}" height="${H-5}" fill="#fff" stroke="#111" stroke-width="5"/>`;
+  steps.forEach((st,i)=>{ s += `<rect class="row" data-r="${i}" x="8" y="${PAD+RH*i+2}" width="${W-16}" height="${RH-4}" rx="10" fill="${i===hi?'#ffd54a':'transparent'}"/>`; });
+  steps.forEach((st,i)=>{ s += step(st, PAD+RH*i+RH/2, W); });
+  return s + "</svg>";
+}
+
+/* Generador de retos nuevos (mismas reglas que la página de tarjetas) */
+function params(n){
+  return {
+    moves: Math.min(3+n,16),
+    rest: Math.max(0, 0.75-0.1*(n-1)),
+    single: n===1 ? 0.15 : Math.min(0.9, 0.2+0.08*n),
+    hop: n>=4, cross: n>=5,
+    contrary: n>=6 ? Math.min(0.6, 0.1*(n-5)) : 0,
+    diag: n>=7 ? Math.min(0.5, 0.12*(n-6)) : 0
+  };
+}
+const OPP = {U:"D",D:"U",L:"R",R:"L",UR:"DL",DL:"UR",UL:"DR",DR:"UL"};
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function genCard(n){
+  const p = params(n), out=[];
+  let prev=null, prevFoot=null;
+  if(Math.random()<0.5) out.push("H");
+  for(let i=0;i<p.moves;i++){
+    let opts = (p.diag && Math.random()<p.diag) ? ["UR","UL","DR","DL"] : ["U","D","L","R"];
+    opts = opts.filter(d => d!==prev && (p.cross || !prev || OPP[prev]!==d));
+    if(!opts.length) opts = ["U","D","L","R"].filter(d=>d!==prev);
+    const d = pick(opts);
+    let f = "B";
+    if(Math.random()<p.single){
+      f = d.includes("L") ? "L" : d.includes("R") ? "R" : pick(["L","R"]);
+      if(Math.random()<p.contrary) f = f==="L" ? "R" : "L";
+      if(!p.hop && f===prevFoot) f = "B";
+    }
+    out.push(`${d}:${f}`); prev=d; prevFoot=f;
+    if(i<p.moves-1 && Math.random()<p.rest){ out.push("H"); prev=null; prevFoot=null; }
+  }
+  out.push("H");
+  return out.join(" ");
+}
+function levelText(n){
+  const p=params(n), parts=[`${p.moves} saltos`];
+  parts.push(p.rest>0.45 ? "casi siempre vuelves al aro central" : p.rest>0 ? "a veces vuelves al aro central" : "sin descanso en el aro central");
+  parts.push(p.single>0.6 ? "casi todo a un pie" : p.single>0.3 ? "bastantes apoyos a un pie" : "algún apoyo a un pie");
+  if(p.hop) parts.push("pata coja seguida");
+  if(p.cross) parts.push("saltos al lado contrario");
+  if(p.contrary) parts.push("pie cruzado");
+  if(p.diag) parts.push("diagonales");
+  return parts.join(", ") + ".";
+}
+
+
+
+
+/* ---------- Sonido (Web Audio, sin archivos) ---------- */
+let AC = null;
+function ac(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==="suspended") AC.resume(); return AC; }
+function tone(t, freq, dur, type="triangle", vol=.25){
+  const a=ac(); if(!a||!S.sound) return;
+  const o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.05);
+}
+let noiseBuf=null;
+function noise(t, dur, vol=.2, hp=2000){
+  const a=ac(); if(!a||!S.sound) return;
+  if(!noiseBuf){ noiseBuf=a.createBuffer(1,a.sampleRate*.5,a.sampleRate); const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; }
+  const src=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain();
+  src.buffer=noiseBuf; f.type="highpass"; f.frequency.value=hp;
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  src.connect(f).connect(g).connect(a.destination); src.start(t); src.stop(t+dur+.02);
+}
+function kick(t){
+  const a=ac(); if(!a||!S.sound) return;
+  const o=a.createOscillator(), g=a.createGain();
+  o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(45,t+.15);
+  g.gain.setValueAtTime(.7,t); g.gain.exponentialRampToValueAtTime(0.0001,t+.25);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+.3);
+}
+function drumroll(sec){ const a=ac(); if(!a) return; const t0=a.currentTime; for(let x=0;x<sec;x+=0.045) noise(t0+x,.04,.12+.15*(x/sec),1200); }
+function woodblock(t,hi){ tone(t, hi?1400:1000, .08, "square", .15); }
+function star(){ const a=ac(); if(!a) return; const t=a.currentTime; [784,988,1319].forEach((f,i)=>tone(t+i*.09,f,.25,"triangle",.22)); }
+function fanfare(){ const a=ac(); if(!a) return; const t=a.currentTime; [[523,0],[659,.15],[784,.3],[1047,.45],[784,.7],[1047,.85]].forEach(([f,d],i)=>tone(t+d,f,i===5?.8:.2,"sawtooth",.12)); noise(t+.85,.8,.15,5000); }
+function sad(){ const a=ac(); if(!a) return; const t=a.currentTime; [392,370,349].forEach((f,i)=>tone(t+i*.18,f,.3,"triangle",.18)); }
+/* Ritmo de baile: bombo en cada golpe (salto), hi-hat y bajo a contratiempo, palmada cada dos */
+const BASS=[110,87.31,130.81,98];
+function groove(t,beat,i){
+  kick(t);
+  noise(t+beat/2,.06,.09,8000);
+  const root=BASS[Math.floor(i/4)%4];
+  tone(t+beat/2,root,beat*.4,"sawtooth",.12);
+  tone(t+beat/2,root*2,beat*.25,"square",.04);
+  if(i%2===1) noise(t,.12,.22,1500);
+}
+
+/* ---------- Jugadores y progreso ---------- */
+const NEED = 3;
+const cur = () => S.players.length ? S.players[Math.min(S.turn,S.players.length-1)] : null;
+const level = () => cur() ? cur().level : S.level;
+function starsHTML(done){ let s=""; for(let i=0;i<NEED;i++) s += i<done ? "★" : `<span class="off">★</span>`; return s; }
+
+/* ---------- Sacar reto ---------- */
+const printed = n => LEVELS[n-1] || null;
+const startNum = n => n===1 ? 4 : 1;
+let lastIdx = {}, newCount = {}, history = [], spinning = false, playing = false, reto = null, checks=[false,false,false];
+
+function nextReto(){
+  const n = level(), cards = printed(n);
+  if(S.mode!=="new" && cards){
+    let i;
+    if(S.mode==="order"){ i = (S.order[n] ?? -1) + 1; if(i>=cards.length) i = 0; S.order[n]=i; persist(); }
+    else { const opts = cards.map((_,k)=>k).filter(k=>k!==lastIdx[n]); i = pick(opts); }
+    lastIdx[n] = i;
+    return { n, seq:cards[i], label:`Tarjeta ${n}.${startNum(n)+i}` };
+  }
+  newCount[n] = (newCount[n]||0) + 1;
+  return { n, seq:genCard(n), label:`Reto nuevo ${newCount[n]}` };
+}
+const wrap = document.getElementById("wrap");
+/* Tarjeta grande: se reparte en columnas cuando es larga para que los dibujos se vean grandes */
+function cardCols(seq, hi, cols){
+  const steps = seq.trim().split(/\s+/), n = steps.length;
+  const CW=240, RH=100, PAD=16, GAP=cols>1?44:0, HEAD=cols>1?54:0;
+  const rows = Math.ceil(n/cols), colH = rows*RH+PAD*2;
+  const W = cols*CW + (cols-1)*GAP, H = colH + HEAD;
+  let s = "";
+  for(let c=0;c<cols;c++){
+    const x = c*(CW+GAP);
+    if(cols>1){
+      s += `<circle cx="${x+CW/2}" cy="24" r="22" fill="#ff2e7e"/><text x="${x+CW/2}" y="33" text-anchor="middle" font-family="Rubik,Arial,sans-serif" font-weight="700" font-size="27" fill="#fff">${c+1}</text>`;
+      if(c<cols-1) s += `<polygon points="${x+CW+10},18 ${x+CW+GAP-10},24 ${x+CW+10},30" fill="#ff2e7e"/>`;
+    }
+    s += `<g transform="translate(${x},${HEAD})"><rect x="2.5" y="2.5" width="${CW-5}" height="${colH-5}" fill="#fff" stroke="#111" stroke-width="5"/>`;
+    for(let r=0;r<rows;r++){
+      const i = c*rows+r; if(i>=n) break;
+      s += `<rect class="row" data-r="${i}" x="8" y="${PAD+RH*r+2}" width="${CW-16}" height="${RH-4}" rx="10" fill="${i===hi?'#ffd54a':'transparent'}"/>`;
+      s += step(steps[i], PAD+RH*r+RH/2, CW);
+    }
+    s += `</g>`;
+  }
+  return { W, H, body:s };
+}
+function fitCard(seq, hi){
+  const n = seq.trim().split(/\s+/).length;
+  const aw = Math.max(120, wrap.clientWidth - 24), ah = Math.max(160, wrap.clientHeight - 48);
+  let best = null;
+  for(let cols=1; cols<=Math.min(4,n); cols++){
+    const c = cardCols(seq, hi, cols), k = Math.min(aw/c.W, ah/c.H);
+    if(!best || k > best.k*1.08) best = { ...c, k };
+  }
+  return `<svg viewBox="0 0 ${best.W} ${best.H}" width="${Math.floor(best.W*best.k)}" height="${Math.floor(best.H*best.k)}" role="img" aria-label="${describe(seq)}">${best.body}</svg>`;
+}
+let shown = null;
+function showCard(seq, cls, hi){
+  shown = { seq, hi };
+  wrap.innerHTML = `<div class="card ${cls||""}">${fitCard(seq, hi)}</div><div class="count" id="count"></div>`;
+}
+function refit(){
+  if(!shown || spinning) return;
+  const card = wrap.querySelector(".card"); if(!card) return;
+  const lit = wrap.querySelector('.row[fill="#ffd54a"]');
+  card.innerHTML = fitCard(shown.seq, lit ? +lit.dataset.r : shown.hi);
+}
+let fitTimer = null;
+window.addEventListener("resize", ()=>{ clearTimeout(fitTimer); fitTimer = setTimeout(refit, 120); });
+function highlight(i){ wrap.querySelectorAll(".row").forEach(r=>r.setAttribute("fill", +r.dataset.r===i ? "#ffd54a" : "transparent")); }
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function spin(){
+  if(spinning || playing) return;
+  hideJudge();
+  if(S.practice && reto){ nextTurn(); renderPlayers(); renderLevels(); }
+  const r = nextReto(); r.player = cur() ? cur().name : null;
+  const go = document.getElementById("go");
+  if(reduce){ land(r); return; }
+  spinning = true; go.disabled = true; document.getElementById("play").disabled = true;
+  document.getElementById("retoLabel").textContent = "Girando…";
+  const delays = [45,45,50,55,60,70,80,95,115,140,170,210];
+  drumroll(delays.reduce((a,b)=>a+b,0)/1000);
+  let k = 0;
+  (function tick(){
+    if(k < delays.length){ showCard(genCard(r.n), "spin"); setTimeout(tick, delays[k++]); }
+    else { spinning = false; go.disabled = false; land(r); const a=ac(); if(a) noise(a.currentTime,.4,.2,4000); }
+  })();
+}
+function land(r){
+  reto = r; history.push(r); if(history.length>40) history.shift();
+  showCard(r.seq, "land"); setLabels(); renderHistory();
+  document.getElementById("play").disabled = false;
+  if(S.players.length && !S.practice) showJudge();
+}
+function setLabels(){
+  document.getElementById("pName").textContent = cur() ? cur().name : "";
+  document.getElementById("lvLabel").textContent = level();
+  document.getElementById("stars").innerHTML = (cur() && !S.practice) ? starsHTML(cur().done) : "";
+  document.getElementById("retoLabel").innerHTML = esc(reto ? reto.label : "Pulsa «Sacar reto»") + (S.practice ? '<span class="practice-tag">Práctica</span>' : "");
+}
+
+/* Saltar con ritmo: cuenta 3-2-1 y un golpe por salto */
+function play(){
+  if(!reto || playing || spinning) return;
+  const steps = reto.seq.trim().split(/\s+/);
+  const beat = 60/S.tempo, a = ac();
+  playing = true; stageEl.classList.add("playing"); stageEl.style.setProperty("--beat", beat+"s"); document.getElementById("play").disabled = true; document.getElementById("go").disabled = true;
+  showCard(reto.seq, "", -1);
+  const count = document.getElementById("count");
+  const t0 = a ? a.currentTime + .1 : 0, ms = beat*1000;
+  ["3","2","1","¡Ya!"].forEach((txt,i)=>{
+    if(a) woodblock(t0+i*beat, i===3);
+    setTimeout(()=>{ const c=document.getElementById("count"); if(c) c.textContent = i<3 ? txt : ""; }, 100+i*ms);
+  });
+  const start = 4;
+  steps.forEach((_,i)=>{
+    if(a) groove(t0+(start+i)*beat, beat, i);
+    setTimeout(()=>highlight(i), 100+(start+i)*ms);
+  });
+  const end = start+steps.length;
+  if(a){ tone(t0+end*beat,130.81,.6,"triangle",.35); [523,659,784].forEach(f=>tone(t0+end*beat,f,.6,"square",.05)); }
+  setTimeout(()=>{
+    highlight(-1); playing = false; stageEl.classList.remove("playing");
+    document.getElementById("play").disabled = false; document.getElementById("go").disabled = false;
+  }, 100+end*ms+300);
+}
+
+/* ---------- Verificación del juez ---------- */
+const judge = document.getElementById("judge");
+const stageEl = document.querySelector(".stage");
+function showJudge(){ checks=[false,false,false]; renderChecks(); judge.classList.add("show"); stageEl.classList.add("judging"); refit(); }
+function hideJudge(){ judge.classList.remove("show"); stageEl.classList.remove("judging"); refit(); }
+function renderChecks(){
+  document.querySelectorAll(".check").forEach(b=>b.setAttribute("aria-pressed", String(checks[+b.dataset.k])));
+  document.getElementById("yes").disabled = !checks.every(Boolean);
+}
+document.getElementById("checks").addEventListener("click", e=>{
+  const b = e.target.closest(".check"); if(!b) return;
+  checks[+b.dataset.k] = !checks[+b.dataset.k]; renderChecks();
+});
+function banner(html, ms=1800){
+  const d = document.createElement("div"); d.className="banner"; d.innerHTML=html; wrap.appendChild(d);
+  setTimeout(()=>d.remove(), ms);
+}
+function nextTurn(){
+  if(!S.auto || S.players.length<2) return;
+  S.turn = (S.turn+1) % S.players.length; persist();
+}
+document.getElementById("yes").onclick = ()=>{
+  const p = cur(); if(!p || !reto) return;
+  reto.result = "ok"; p.done++;
+  if(p.done >= NEED){
+    p.level++; p.done = 0; fanfare();
+    banner(`¡${p.name} sube al nivel ${p.level}!<small>3 retos superados</small>`, 2600);
+  } else { star(); banner(`¡Superado!<small>${p.done} de ${NEED}</small>`, 1400); }
+  finishReto();
+};
+document.getElementById("no").onclick = ()=>{
+  if(!reto) return; reto.result = "ko"; sad();
+  banner(`¡Casi!<small>No cuenta, a por el siguiente</small>`, 1400);
+  finishReto();
+};
+document.getElementById("again").onclick = ()=>{ checks=[false,false,false]; renderChecks(); play(); };
+function finishReto(){
+  hideJudge(); persist(); renderHistory();
+  setTimeout(()=>{
+    nextTurn(); reto = null; renderAll();
+    wrap.innerHTML = `<p class="empty">${cur() ? `Turno de <b>${esc(cur().name)}</b>` : ""} Pulsa <b>Sacar reto</b>.</p>`;
+    document.getElementById("play").disabled = true;
+  }, 1600);
+}
+
+/* ---------- Historial ---------- */
+function renderHistory(){
+  const h = document.getElementById("history");
+  h.innerHTML = history.map((r,i)=>`<button type="button" class="hist ${r.result||""}" data-i="${i}" aria-label="Volver a ver ${r.label}${r.player?`, de ${esc(r.player)}`:""}">${cardSVG(r.seq)}<span>${r.player?esc(r.player):"Nivel "+r.n}</span></button>`).join("");
+  h.scrollLeft = h.scrollWidth;
+  document.getElementById("clearHist").hidden = !history.length;
+}
+document.getElementById("history").addEventListener("click", e=>{
+  const b = e.target.closest(".hist"); if(!b || spinning || playing) return;
+  const r = history[+b.dataset.i]; showCard(r.seq, "land");
+  document.getElementById("retoLabel").textContent = `${r.label}${r.player?` · ${r.player}`:""} (repaso)`;
+});
+
+/* ---------- Panel ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function renderPlayers(){
+  const ul = document.getElementById("players");
+  ul.innerHTML = S.players.map((p,i)=>`<li class="pl" ${i===S.turn?'aria-current="true"':""}>
+    <button type="button" class="who" data-turn="${i}" aria-label="Turno de ${esc(p.name)}"><b>${esc(p.name)}</b><span>Nivel ${p.level} <span class="dots">${"●".repeat(p.done)}${"○".repeat(NEED-p.done)}</span></span></button>
+    <span class="lvctl"><button type="button" data-lv="-1" data-i="${i}" aria-label="Bajar nivel a ${esc(p.name)}">−</button><button type="button" data-lv="1" data-i="${i}" aria-label="Subir nivel a ${esc(p.name)}">+</button></span>
+    <button type="button" class="del" data-del="${i}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`).join("");
+  document.getElementById("noPlayers").style.display = S.players.length ? "none" : "";
+  document.getElementById("lvTitle").textContent = cur() ? `Nivel de ${cur().name}` : "Nivel";
+}
+document.getElementById("addForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const inp = document.getElementById("nameIn"), name = inp.value.trim();
+  if(!name || S.players.length>=12) return;
+  S.players.push({ name, level: S.players.length ? 1 : S.level, done:0 });
+  if(S.players.length===1){ S.turn = 0; S.practice = false; hideJudge(); }
+  inp.value = ""; persist(); renderAll(); inp.focus();
+});
+document.getElementById("players").addEventListener("click", e=>{
+  const t = e.target.closest("[data-turn]"), l = e.target.closest("[data-lv]"), d = e.target.closest("[data-del]");
+  if(t){ S.turn = +t.dataset.turn; }
+  else if(l){ const p = S.players[+l.dataset.i]; p.level = Math.max(1, Math.min(99, p.level + (+l.dataset.lv))); p.done = 0; }
+  else if(d){
+    if(d.dataset.armed!=="1"){ d.dataset.armed="1"; d.textContent="¿Sí?"; d.style.width="auto"; d.style.padding="0 6px"; setTimeout(()=>renderPlayers(),2500); return; }
+    const i=+d.dataset.del; S.players.splice(i,1); if(S.turn>=S.players.length) S.turn=0; if(!S.players.length){ S.practice = true; hideJudge(); } }
+  else return;
+  persist(); renderAll();
+});
+
+function renderLevels(){
+  const lv = level();
+  document.getElementById("levels").innerHTML = Array.from({length:10},(_,i)=>i+1)
+    .map(n=>`<button type="button" class="lv" data-lv="${n}" aria-pressed="${lv===n}">${n}</button>`).join("");
+  document.getElementById("lvlIn").value = lv;
+  const has = !!printed(lv);
+  document.querySelectorAll("#modes button").forEach(b=>{
+    const m = b.dataset.mode;
+    b.setAttribute("aria-pressed", String(m===S.mode));
+    b.disabled = m!=="new" && !has;
+  });
+  document.getElementById("modeHint").textContent =
+    (!has && S.mode!=="new") ? `El nivel ${lv} no tiene tarjetas impresas: salen retos nuevos. ${levelText(lv)}`
+    : `Nivel ${lv}: ${levelText(lv)}`;
+  document.querySelectorAll("#tempos button, #tempos2 button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.t===S.tempo)));
+}
+function setLevel(n){
+  n = Math.max(1, Math.min(99, n|0 || 1));
+  if(cur()){ if(cur().level===n) return; cur().level=n; cur().done=0; }
+  else S.level = n;
+  persist(); renderAll();
+}
+function renderAll(){ renderPlayers(); renderLevels(); setLabels(); renderPractice(); renderCover(); }
+document.getElementById("levels").addEventListener("click", e=>{ const b=e.target.closest(".lv"); if(b) setLevel(+b.dataset.lv); });
+document.getElementById("lvlIn").addEventListener("change", e=> setLevel(+e.target.value));
+document.getElementById("modes").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b || b.disabled) return;
+  S.mode = b.dataset.mode; persist(); renderLevels();
+});
+document.getElementById("tempos2").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return; S.tempo = +b.dataset.t; persist(); renderLevels();
+  const a=ac(); if(a){ woodblock(a.currentTime,false); woodblock(a.currentTime+60/S.tempo,false); }
+});
+document.getElementById("tempos").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return; S.tempo = +b.dataset.t; persist(); renderLevels();
+  const a=ac(); if(a){ woodblock(a.currentTime,false); woodblock(a.currentTime+60/S.tempo,false); }
+});
+const snd = document.getElementById("sound"); snd.checked = S.sound;
+snd.onchange = ()=>{ S.sound = snd.checked; persist(); };
+const autoT = document.getElementById("auto"); autoT.checked = S.auto;
+autoT.onchange = ()=>{ S.auto = autoT.checked; persist(); };
+document.getElementById("go").onclick = ()=>{ ac(); spin(); };
+document.getElementById("play").onclick = ()=>{ ac(); play(); };
+
+const cf = document.getElementById("colorFoot"); cf.checked = S.colorFoot;
+function renderSwatches(){
+  document.getElementById("swatches").innerHTML = COLORS.map(([n,c])=>
+    `<button type="button" class="sw" style="background:${c}" data-c="${c}" aria-label="${n}" aria-pressed="${S.color===c}"></button>`).join("");
+}
+function redraw(){ if(reto && !playing && !spinning) showCard(reto.seq); renderHistory(); }
+cf.onchange = ()=>{ S.colorFoot = cf.checked; persist(); redraw(); };
+document.getElementById("swatches").addEventListener("click", e=>{
+  const b = e.target.closest(".sw"); if(!b) return;
+  S.color = b.dataset.c; S.colorFoot = true; cf.checked = true; persist(); renderSwatches(); redraw();
+});
+
+const cleanBtn = document.getElementById("clean");
+cleanBtn.onclick = ()=>{
+  const on = document.body.classList.toggle("clean");
+  cleanBtn.textContent = on ? "Salir de pantalla completa" : "Pantalla completa";
+  try{
+    if(on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+    if(!on && document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  }catch(e){}
+};
+document.addEventListener("fullscreenchange", ()=>{ if(!document.fullscreenElement && document.body.classList.contains("clean")){ document.body.classList.remove("clean"); cleanBtn.textContent="Pantalla completa"; } });
+document.addEventListener("keydown", e=>{
+  if(view!=="jugar" || e.target.matches("input")) return;
+  if(e.key===" " && !e.target.matches("button")){ e.preventDefault(); ac(); spin(); }
+  else if((e.key==="r"||e.key==="R")){ ac(); play(); }
+});
+
+/* ---------- Pestañas ---------- */
+const VIEWS = ["portada","jugar","configuracion","ayuda"];
+let view = "portada";
+function route(){
+  const h = location.hash.slice(1);
+  view = VIEWS.includes(h) ? h : "portada";
+  VIEWS.forEach(v=>document.getElementById("v-"+v).classList.toggle("active", v===view));
+  document.querySelectorAll(".tabs a").forEach(a=>{ if(a.dataset.v===view) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  if(view!=="jugar" && document.body.classList.contains("clean")) cleanBtn.click();
+  if(view==="jugar") requestAnimationFrame(refit);
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange", route);
+function renderCover(){
+  const el = document.getElementById("coverStatus");
+  if(S.practice){
+    el.innerHTML = `Ahora: <b>modo práctica</b>, nivel ${level()}. Para jugar con retos y estrellas, añade jugadores en Configuración.`;
+  } else {
+    el.innerHTML = `Ahora: <b>modo Retos</b> con ${S.players.length} jugador${S.players.length===1?"":"es"}. Le toca a <b>${esc(cur().name)}</b> (nivel ${cur().level}).`;
+  }
+}
+document.getElementById("lvUp").onclick = ()=> setLevel(level()+1);
+document.getElementById("lvDown").onclick = ()=> setLevel(level()-1);
+document.getElementById("legend").innerHTML = [
+  ["H","Salta dentro del aro central"],["U:B","Salta al aro de ese lado con los dos pies"],
+  ["L:L","Cae solo con el pie izquierdo"],["R:R","Cae solo con el pie derecho"],["UR:B","Salto en diagonal (desde el nivel 7)"]
+].map(([st,t])=>`<li><svg viewBox="0 0 240 100" aria-hidden="true">${step(st,50,240)}</svg><span>${t}</span></li>`).join("");
+
+let practiceMsg = "";
+function renderPractice(){
+  document.querySelectorAll("#practiceSeg button").forEach(b=>b.setAttribute("aria-pressed", String((b.dataset.p==="1")===S.practice)));
+  document.getElementById("practiceHint").textContent = practiceMsg || (S.practice
+    ? "Se sacan y se saltan retos sin juez ni estrellas. Los niveles no cambian."
+    : "El juez verifica cada reto y con 3 superados se sube de nivel.");
+  practiceMsg = "";
+  document.getElementById("lvUp").hidden = document.getElementById("lvDown").hidden = !S.practice;
+}
+document.getElementById("practiceSeg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const want = b.dataset.p==="1";
+  if(!want && !S.players.length){ practiceMsg = "Para jugar con retos, añade al menos un jugador."; renderPractice(); document.getElementById("nameIn").focus(); return; }
+  S.practice = want; persist();
+  if(S.practice) hideJudge(); else if(reto && S.players.length && !reto.result) showJudge();
+  renderPractice(); renderAll();
+});
+document.getElementById("clearHist").onclick = ()=>{ history = []; renderHistory(); };
+if(!S.players.length) S.practice = true;
+S.turn = Math.min(S.turn, Math.max(0,S.players.length-1));
+document.getElementById("eq").innerHTML = Array.from({length:40},(_,i)=>`<span style="--h:${10+Math.round(Math.abs(Math.sin(i*1.7))*22)}px;--d:${-(i%7)*0.07}s"></span>`).join("");
+renderAll(); renderSwatches(); route();
+</script>
+</body>
+</html>
